@@ -1,0 +1,10 @@
+<pl.jw.mbank.client.config.Configuration>
+  <dataRefreshTimeout>60</dataRefreshTimeout>
+  <dataFilter>
+    <filter>
+      <string>russ.*eq</string>
+      <string>turk</string>
+      <string>hsbc.*bric eq</string>
+    </filter>
+  </dataFilter>
+</pl.jw.mbank.client.config.Configuration>
