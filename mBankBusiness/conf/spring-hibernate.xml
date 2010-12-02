@@ -10,12 +10,13 @@
 	http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
 	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd 
 	http://www.springframework.org/schema/context
-	http://www.springframework.org/schema/context/spring-context-3.0.xsd"><!--
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-	<context:property-placeholder location="file:cfg-profiles/test/applicationContext.properties" />
-	-->
-	<context:property-placeholder location="classpath:applicationContextJUnit.properties" />
+	<context:property-placeholder
+		location="classpath:applicationContext.properties" />
 
+	<!--<context:property-placeholder location="classpath:applicationContextJUnit.properties" 
+		/> -->
 	<bean id="hsqlDb" class="org.apache.commons.dbcp.BasicDataSource"
 		destroy-method="close">
 		<property name="driverClassName" value="org.hsqldb.jdbcDriver" />
@@ -84,25 +85,13 @@
 		</property>
 
 	</bean>
-	<!--
+	<!-- <tx:advice id="txAdvice" transaction-manager="transactionManager"> 
+		<tx:attributes> <tx:method name="add*" propagation="REQUIRES_NEW" /> <tx:method 
+		name="update*" propagation="REQUIRES_NEW" /> <tx:method name="get*" read-only="true" 
+		propagation="SUPPORTS" /> </tx:attributes> </tx:advice> <aop:config> <aop:pointcut 
+		id="bizMethods" expression="execution(* pl.jw.mbank.common.request.*.*(..))" 
+		/> <aop:advisor pointcut-ref="bizMethods" advice-ref="txAdvice" /> </aop:config> -->
 
-
-	<tx:advice id="txAdvice" transaction-manager="transactionManager">
-		<tx:attributes>
-			<tx:method name="add*" propagation="REQUIRES_NEW" />
-			<tx:method name="update*" propagation="REQUIRES_NEW" />
-			<tx:method name="get*" read-only="true" propagation="SUPPORTS" />
-		</tx:attributes>
-	</tx:advice>
-
-	<aop:config>
-		<aop:pointcut id="bizMethods"
-			expression="execution(* pl.jw.mbank.common.request.*.*(..))" />
-		<aop:advisor pointcut-ref="bizMethods" advice-ref="txAdvice" />
-	</aop:config>
-
-	-->
-	
 	<!-- <bean id="presentationTransactionManager" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"> 
 		<property name="transactionManager"> <ref local="transactionManager" /> </property> 
 		<property name="target"> <ref local="presentationDao" /> </property> <property 

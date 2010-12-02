@@ -1,8 +1,10 @@
 package pl.jw.mbank.biz;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import org.hibernate.Criteria;
@@ -10,6 +12,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
@@ -153,7 +156,7 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 			@Override
 			public List<PresentationGraphData> doInHibernate(Session session) throws HibernateException, SQLException {
 
-				Criteria main = session.createCriteria(PresentationGraphData.class);
+				Criteria main = session.createCriteria(StockQuotesData.class);
 				main.add(Restrictions.eq("sfi.id", sfiPk.getId()));
 				main.addOrder(Order.asc("date"));
 
@@ -162,6 +165,42 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 		};
 
 		return getHibernateTemplate().execute(action);
+	}
+
+	public PresentationGraphData getPeriodSummaryData(final SfiData sfiPk, final int periodLenght) throws SQLException {
+
+		HibernateCallback<Object[]> action = new HibernateCallback<Object[]>() {
+
+			@Override
+			public Object[] doInHibernate(Session session) throws HibernateException, SQLException {
+
+				Calendar fromDate = Calendar.getInstance();
+				fromDate.roll(Calendar.MONTH, periodLenght);
+
+				Criteria main = session.createCriteria(StockQuotesData.class);
+				main.setProjection(Projections.projectionList()
+						.add(Projections.alias(Projections.sum("delta"), "delta"))
+						.add(Projections.alias(Projections.max("value"), "value"))
+						.add(Projections.alias(Projections.max("date"), "date"))
+						.add(Projections.alias(Projections.groupProperty("sfi.id"), "sfi.id")));
+				main.add(Restrictions.eq("sfi.id", sfiPk.getId()));
+				main.add(Restrictions.ge("date", fromDate.getTime()));
+
+				return (Object[]) main.uniqueResult();
+			}
+		};
+
+		Object[] data = getHibernateTemplate().execute(action);
+
+		PresentationGraphData pgd = new PresentationGraphData();
+		if (data != null) {
+			pgd.setDate((Date) data[2]);
+			pgd.setDelta((BigDecimal) data[0]);
+			pgd.setId((Integer) data[3]);
+			pgd.setValue((BigDecimal) data[1]);
+		}
+
+		return pgd;
 	}
 
 	public List<InvstmentDirectionsData> getInvestmentDirectionsData() throws SQLException {

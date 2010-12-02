@@ -20,4 +20,6 @@ public interface IPresentation extends IRequest {
 	public List<PresentationGraphData> getGraphData(final SfiData sfiPk) throws SQLException;
 
 	public List<InvstmentDirectionsData> getInvestmentDirectionsData() throws SQLException;
+
+	public PresentationGraphData getPeriodSummaryData(final SfiData sfiPk, final int periodLenght) throws SQLException;
 }

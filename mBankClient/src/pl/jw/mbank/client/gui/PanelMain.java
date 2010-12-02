@@ -25,6 +25,8 @@ import pl.jw.mbank.client.Env;
 import pl.jw.mbank.client.ExceptionHandler;
 import pl.jw.mbank.client.data.ITableDataRefreshCallbackHanlder;
 import pl.jw.mbank.client.data.loader.DataLoadTask;
+import pl.jw.mbank.client.gui.PanelGraph.PanelGraphDataInterpreterDelta;
+import pl.jw.mbank.client.gui.PanelGraph.PanelGraphDataInterpreterValue;
 import pl.jw.mbank.common.dto.PresentationData;
 import pl.jw.mbank.common.filter.DataFilter;
 
@@ -46,11 +48,15 @@ public class PanelMain extends JPanel {
 	private final JTextField jTextFieldFilter = new JTextField();
 	private final JTabbedPane jTabbedPane = new JTabbedPane();
 
+	private final PanelPeriodGrowSummary panelPeriodGrowSummary = new PanelPeriodGrowSummary();
+
 	private final TableRefreshCallbackHanlder refreshCallbackHanlder = new TableRefreshCallbackHanlder();
 
 	private final PanelInvestments panelInvestments = new PanelInvestments(refreshCallbackHanlder);
 
-	private final PanelGraph panelGraph = new PanelGraph();
+	private final PanelGraph panelGraphDelta = new PanelGraph(new PanelGraphDataInterpreterDelta());
+	private final PanelGraph panelGraphValue = new PanelGraph(new PanelGraphDataInterpreterValue());
+
 	private final PanelInvestmentCandidates panelInvestmentCandidates = new PanelInvestmentCandidates();
 
 	private final JTable jTableMBankSfi = new JTableMBankSfi();
@@ -85,14 +91,20 @@ public class PanelMain extends JPanel {
 		jToolBar.add(jTextFieldFilter);
 
 		jTabbedPane.setPreferredSize(new Dimension(Short.MAX_VALUE, 200));
-		jTabbedPane.addTab("Graph", panelGraph);
+		jTabbedPane.addTab("Graph - delta", panelGraphDelta);
+		jTabbedPane.addTab("Graph - unit value", panelGraphValue);
+
 		jTabbedPane.addTab("Analysis", panelInvestmentCandidates);
 
 		add(jToolBar, BorderLayout.PAGE_START);
 		add(new JScrollPane(jTableMBankSfi), BorderLayout.CENTER);
 		add(panelInvestments, BorderLayout.EAST);
 
-		add(jTabbedPane, BorderLayout.SOUTH);
+		JPanel southPanel = new JPanel(new BorderLayout());
+		southPanel.add(panelPeriodGrowSummary, BorderLayout.SOUTH);
+		southPanel.add(jTabbedPane, BorderLayout.CENTER);
+
+		add(southPanel, BorderLayout.SOUTH);
 
 		addActions();
 
@@ -143,11 +155,15 @@ public class PanelMain extends JPanel {
 
 	private void rowSelected(PresentationData selectedRowData) throws Exception {
 		if (selectedRowData != null) {
+			panelPeriodGrowSummary.refresh(selectedRowData.getSfiData());
 			panelInvestments.setData(selectedRowData.getSfiData());
-			panelGraph.refresh(selectedRowData.getSfiData());
+			panelGraphDelta.refresh(selectedRowData.getSfiData());
+			panelGraphValue.refresh(selectedRowData.getSfiData());
 		} else {
+			panelPeriodGrowSummary.refresh(null);
 			panelInvestments.setData(null);
-			panelGraph.refresh(null);
+			panelGraphDelta.refresh(null);
+			panelGraphValue.refresh(null);
 		}
 	}
 

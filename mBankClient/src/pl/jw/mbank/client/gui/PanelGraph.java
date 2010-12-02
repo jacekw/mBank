@@ -3,6 +3,8 @@ package pl.jw.mbank.client.gui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -27,10 +29,57 @@ import pl.jw.mbank.common.request.IPresentation;
 
 public class PanelGraph extends JPanel {
 
+	interface IPanelGraphDataInterpreter {
+		BigDecimal getDataColumn(StockQuotesData stockQuotesData);
+
+		List<PresentationGraphData> getData(SfiData sfiData) throws SQLException, Exception;
+
+		String getValueAxisLabel();
+	}
+
+	static class PanelGraphDataInterpreterDelta implements IPanelGraphDataInterpreter {
+		public BigDecimal getDataColumn(StockQuotesData stockQuotesData) {
+			return stockQuotesData.getDelta();
+		}
+
+		public List<PresentationGraphData> getData(SfiData sfiData) throws SQLException, Exception {
+			List<PresentationGraphData> data = RequestProxyFactory.getInstance().requestData(IPresentation.class)
+					.getGraphData(sfiData);
+			return data;
+		}
+
+		@Override
+		public String getValueAxisLabel() {
+			return "Delta [%]";
+		}
+
+	}
+
+	static class PanelGraphDataInterpreterValue implements IPanelGraphDataInterpreter {
+		public BigDecimal getDataColumn(StockQuotesData stockQuotesData) {
+			return stockQuotesData.getValue();
+		}
+
+		public List<PresentationGraphData> getData(SfiData sfiData) throws SQLException, Exception {
+			List<PresentationGraphData> data = RequestProxyFactory.getInstance().requestData(IPresentation.class)
+					.getGraphData(sfiData);
+			return data;
+		}
+
+		@Override
+		public String getValueAxisLabel() {
+			return "Value";
+		}
+	}
+
+	private final IPanelGraphDataInterpreter dataInterpreter;
+
 	private JFreeChart chart;
 	private ChartPanel chartPanel;
 
-	public PanelGraph() {
+	public PanelGraph(IPanelGraphDataInterpreter dataInterpreter) {
+		this.dataInterpreter = dataInterpreter;
+
 		init();
 	}
 
@@ -88,32 +137,30 @@ public class PanelGraph extends JPanel {
 		axis.setDateFormatOverride(new SimpleDateFormat("dd-MM"));
 		//		axis.setTickLabelFont(new Font(Font.SANS_SERIF, Font.PLAIN, 8));
 
-		plot.getRangeAxis().setLabel("Delta [%]");
+		plot.getRangeAxis().setLabel(dataInterpreter.getValueAxisLabel());
 
 		setVisible(false);
 	}
 
 	void refresh(SfiData sfiData) throws Exception {
+
 		if (sfiData != null) {
 			chart.setTitle(sfiData.getName());
-			setVisible(true);
 
-			List<PresentationGraphData> data = RequestProxyFactory.getInstance().requestData(IPresentation.class)
-					.getGraphData(sfiData);
+			List<PresentationGraphData> data = dataInterpreter.getData(sfiData);
 
 			TimeSeries ts = new TimeSeries("");
 			for (StockQuotesData stockQuotesData : data) {
-				ts.add(new Day(stockQuotesData.getDate()), stockQuotesData.getDelta());
+				ts.add(new Day(stockQuotesData.getDate()), dataInterpreter.getDataColumn(stockQuotesData));
 			}
 
 			TimeSeriesCollection dataset = new TimeSeriesCollection();
 			dataset.addSeries(ts);
 
 			chart.getXYPlot().setDataset(dataset);
-			chart.fireChartChanged();
-		} else {
-			setVisible(false);
+			//			chart.fireChartChanged();
 		}
 
 	}
+
 }
