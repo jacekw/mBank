@@ -60,7 +60,7 @@ public class PresentationTest extends MBankTest {
 	public void getInvestmentDirectionsData() throws SQLException {
 		addStockQuotes();
 
-		List<InvstmentDirectionsData> investDirections = presentationDao.getInvestmentDirectionsData();
+		List<InvstmentDirectionsData> investDirections = presentationDao.getInvestmentDirectionsData(1);
 
 		Assert.assertNotNull("Oczekiwana lista z 1 obiektem.", investDirections);
 		Assert.assertEquals("Oczekiwana lista z 1 obiektem.", 1, investDirections.size());

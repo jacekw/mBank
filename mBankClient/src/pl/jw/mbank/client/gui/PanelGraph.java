@@ -68,7 +68,7 @@ public class PanelGraph extends JPanel {
 
 		@Override
 		public String getValueAxisLabel() {
-			return "Value";
+			return "Value [z³]";
 		}
 	}
 

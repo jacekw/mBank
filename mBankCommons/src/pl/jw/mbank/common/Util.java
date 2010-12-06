@@ -3,6 +3,7 @@ package pl.jw.mbank.common;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
+import java.util.Calendar;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,11 +36,20 @@ public class Util {
 
 	public static BigDecimal getNumber(String html) {
 		try {
-			return new BigDecimal(html.replaceAll("b/d", "0").replaceAll(",", ".").replace("&nbsp;", "").replaceAll(
-					"[^-0-9\\.]", "").trim()).setScale(3);
+			return new BigDecimal(html.replaceAll("b/d", "0").replaceAll(",", ".").replace("&nbsp;", "")
+					.replaceAll("[^-0-9\\.]", "").trim()).setScale(3);
 		} catch (Exception e) {
 			log.debug("Conversion error: \"" + html + "\".", e);
 			return BigDecimal.ZERO;
 		}
+	}
+
+	public static Calendar rollDate(final int periodLenght, Calendar fromDate) {
+		if (periodLenght > 11) {
+			fromDate.roll(Calendar.YEAR, -(periodLenght / 12));
+		} else {
+			fromDate.roll(Calendar.MONTH, -periodLenght);
+		}
+		return fromDate;
 	}
 }

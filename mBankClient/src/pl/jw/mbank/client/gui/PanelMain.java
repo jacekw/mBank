@@ -154,6 +154,7 @@ public class PanelMain extends JPanel {
 	}
 
 	private void rowSelected(PresentationData selectedRowData) throws Exception {
+
 		if (selectedRowData != null) {
 			panelPeriodGrowSummary.refresh(selectedRowData.getSfiData());
 			panelInvestments.setData(selectedRowData.getSfiData());

@@ -1,6 +1,7 @@
 package pl.jw.mbank.biz;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import org.hibernate.criterion.Restrictions;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
+import pl.jw.mbank.common.Util;
 import pl.jw.mbank.common.dto.InvestmentData;
 import pl.jw.mbank.common.dto.InvstmentDirectionsData;
 import pl.jw.mbank.common.dto.PresentationData;
@@ -167,60 +169,103 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 		return getHibernateTemplate().execute(action);
 	}
 
-	public PresentationGraphData getPeriodSummaryData(final SfiData sfiPk, final int periodLenght) throws SQLException {
-
-		HibernateCallback<Object[]> action = new HibernateCallback<Object[]>() {
+	/**
+	 * 
+	 * @param sfiPk null possible -> no sfi context
+	 * @param months null possible -> no data range
+	 * @return
+	 */
+	private List<StockQuotesData> getGrowthData(final SfiData sfiPk, final Integer months) {
+		HibernateCallback<List<StockQuotesData>> action = new HibernateCallback<List<StockQuotesData>>() {
 
 			@Override
-			public Object[] doInHibernate(Session session) throws HibernateException, SQLException {
+			public List<StockQuotesData> doInHibernate(Session session) throws HibernateException, SQLException {
 
-				Calendar fromDate = Calendar.getInstance();
-				fromDate.roll(Calendar.MONTH, periodLenght);
+				Calendar fromDate = months == null ? null : Util.rollDate(months, Calendar.getInstance());
 
 				Criteria main = session.createCriteria(StockQuotesData.class);
-				main.setProjection(Projections.projectionList()
-						.add(Projections.alias(Projections.sum("delta"), "delta"))
-						.add(Projections.alias(Projections.max("value"), "value"))
-						.add(Projections.alias(Projections.max("date"), "date"))
-						.add(Projections.alias(Projections.groupProperty("sfi.id"), "sfi.id")));
-				main.add(Restrictions.eq("sfi.id", sfiPk.getId()));
-				main.add(Restrictions.ge("date", fromDate.getTime()));
+				if (sfiPk != null) {
+					main.add(Restrictions.eq("sfi.id", sfiPk.getId()));
+				}
+				if (fromDate != null) {
+					main.add(Restrictions.ge("date", fromDate.getTime()));
+				}
+				main.addOrder(Order.asc("date"));
 
-				return (Object[]) main.uniqueResult();
+				return main.list();
 			}
+
 		};
 
-		Object[] data = getHibernateTemplate().execute(action);
+		return getHibernateTemplate().execute(action);
+	}
+
+	public PresentationGraphData getPeriodSummaryData(final SfiData sfiPk, final Integer months) throws SQLException {
+
+		List<StockQuotesData> listData = getGrowthData(sfiPk, months);
 
 		PresentationGraphData pgd = new PresentationGraphData();
-		if (data != null) {
-			pgd.setDate((Date) data[2]);
-			pgd.setDelta((BigDecimal) data[0]);
-			pgd.setId((Integer) data[3]);
-			pgd.setValue((BigDecimal) data[1]);
+		if (listData != null && listData.size() > 1) {
+			StockQuotesData sqFirst = listData.get(0);
+			StockQuotesData sqLast = listData.get(listData.size() - 1);
+
+			BigDecimal growth = sqLast.getValue().subtract(sqFirst.getValue()).setScale(3, RoundingMode.HALF_DOWN);
+
+			pgd.setDate(sqFirst.getDate());
+			pgd.setDelta(growth.divide(sqFirst.getValue(), RoundingMode.FLOOR).multiply(new BigDecimal(100))
+					.setScale(3, RoundingMode.HALF_DOWN));
+			pgd.setSfi(sqFirst.getSfi());
+			pgd.setValue(growth);
 		}
 
 		return pgd;
 	}
 
-	public List<InvstmentDirectionsData> getInvestmentDirectionsData() throws SQLException {
+	public List<InvstmentDirectionsData> getInvestmentDirectionsData(final Integer months) throws SQLException {
 
-		HibernateCallback<List<InvstmentDirectionsData>> action = new HibernateCallback<List<InvstmentDirectionsData>>() {
+		HibernateCallback<List<Object[]>> action = new HibernateCallback<List<Object[]>>() {
 
 			@Override
-			public List<InvstmentDirectionsData> doInHibernate(Session session) throws HibernateException, SQLException {
+			public List<Object[]> doInHibernate(Session session) throws HibernateException, SQLException {
 
-				Criteria main = session.createCriteria(InvstmentDirectionsData.class, "sq");
-				session.createCriteria(InvestmentData.class);
-				//				main.createAlias("SFI", "SFI_ID").add(Restrictions.eq("sfi.id", "SFI_ID"));
-				//				main.createCriteria("SFI");
-				//				main.createCriteria("id", "SFI");
-				main.addOrder(Order.asc("DATE"));
+				Calendar fromDate = months == null ? null : Util.rollDate(months, Calendar.getInstance());
+
+				Criteria main = session.createCriteria(StockQuotesData.class, "sq");
+				main.createCriteria("sfi", "sfi");
+				main.setProjection(Projections.projectionList()
+						.add(Projections.alias(Projections.sum("delta"), "delta"))
+						.add(Projections.alias(Projections.max("value"), "value"))
+						.add(Projections.alias(Projections.max("date"), "date"))
+						.add(Projections.alias(Projections.groupProperty("sfi.id"), "sfi.id"))
+						.add(Projections.alias(Projections.property("sfi.name"), "sfi.name"))
+
+				);
+
+				main.add(Restrictions.le("delta", BigDecimal.ZERO));
+				if (fromDate != null) {
+					main.add(Restrictions.ge("date", fromDate.getTime()));
+				}
+				main.addOrder(Order.asc("delta"));
 
 				return main.list();
 			}
 		};
 
-		return getHibernateTemplate().execute(action);
+		List<InvstmentDirectionsData> listIDData = new ArrayList<InvstmentDirectionsData>();
+
+		//dla kazdego sfi pobrac wartosc z poczatkowej daty zakresu i ostatniej daty zakresu i obliczyc % roznice
+
+		List<Object[]> listData = getHibernateTemplate().execute(action);
+		for (Object[] dataRow : listData) {
+			InvstmentDirectionsData idd = new InvstmentDirectionsData();
+			idd.setDate((Date) dataRow[2]);
+			idd.setDelta((BigDecimal) dataRow[0]);
+			idd.setValue((BigDecimal) dataRow[1]);
+			idd.setSfi(new SfiData((Integer) dataRow[3], (String) dataRow[4]));
+
+			listIDData.add(idd);
+		}
+
+		return listIDData;
 	}
 }
