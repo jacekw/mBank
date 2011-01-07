@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="pl/jw/mbank/common/dto/old/|pl/jw/mbank/common/dto/AccountData.java" kind="src" path="src"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/log4j-1.2.15.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xstream-1.3.1.jar" sourcepath="I:/pro-art/libs/xstream-distribution-1.3.1-src.zip"/>
@@ -13,6 +13,7 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/hibernate/additional/hibernate-validator-4.1.0.Final.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.6.1.jar"/>
+	<classpathentry kind="lib" path="src/pl/jw/mbank/common/dto/AccountData.java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

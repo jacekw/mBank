@@ -19,6 +19,7 @@ import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import pl.jw.mbank.common.Util;
+import pl.jw.mbank.common.dto.AccountData;
 import pl.jw.mbank.common.dto.InvestmentData;
 import pl.jw.mbank.common.dto.InvstmentDirectionsData;
 import pl.jw.mbank.common.dto.PresentationData;
@@ -69,7 +70,7 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 		getHibernateTemplate().execute(action);
 	}
 
-	public List<PresentationData> get(DataFilter filter) throws SQLException {
+	public List<PresentationData> get(final AccountData accountData, DataFilter filter) throws SQLException {
 
 		HibernateCallback<List<PresentationData>> action = new HibernateCallback<List<PresentationData>>() {
 
@@ -83,25 +84,28 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 				Criteria invQuotes = main.createAlias("investment", InvestmentData.class.getSimpleName()).add(
 						Restrictions.eqProperty("id", "sfi_id"));
 
-				//				List l = main.list();
-
 				SQLQuery q = session
 						.createSQLQuery("SELECT SFI.NAME, SFI.ID, SFI.INVESTMENT_ID, "
-								+ " INVESTMENT.ID, INVESTMENT.SFI_ID, INVESTMENT.Simulation,"
+								+ " INVESTMENT.ID, INVESTMENT.SFI_ID, INVESTMENT.Simulation, Investment.account_id, "
 								+ " STOCKQUOTES.ID,STOCKQUOTES.SFI_ID, STOCKQUOTES.DATE, STOCKQUOTES.VALUE , STOCKQUOTES.DELTA,"
+								+ " Account.NAME, Account.ID, "
 								+ " COALESCE(Investment.initialvalue,0) AS initialvalue , "
 								+ " COALESCE(Investment.units,0) AS units , "
 								+ " CAST (COALESCE(Investment.units,0) * StockQuotes.value AS DECIMAL(18,3)) AS acctualValue, "
 								+ " CASE WHEN Investment.initialvalue IS NULL OR Investment.initialvalue = 0 OR Investment.units IS NULL OR Investment.units = 0 THEN 0 ELSE CAST (Investment.initialvalue / Investment.units  AS  DECIMAL(18,3)) END AS initValue "
-								+ " FROM SFI AS sfi " + " LEFT OUTER JOIN StockQuotes ON StockQuotes.SFI_ID = SFI.ID  "
-								+ " LEFT OUTER JOIN Investment ON Investment.SFI_ID = SFI.ID " + " WHERE "
+								+ " FROM SFI AS sfi "
+								+ " LEFT OUTER JOIN StockQuotes ON StockQuotes.SFI_ID = SFI.ID  "
+								+ " LEFT OUTER JOIN Investment ON Investment.SFI_ID = SFI.ID AND "
+								+ (accountData == null ? " Investment.ACCOUNT_ID IS NULL "
+										: " Investment.ACCOUNT_ID = " + accountData.getId())
+								+ " LEFT OUTER JOIN Account ON Investment.account_id = Account.ID " + " WHERE "
 								+ " StockQuotes.date = ( "
 								+ " SELECT MAX(sq.date) FROM StockQuotes sq WHERE sq.SFI_ID = SFI.ID" + " ) "
 								+ " ORDER BY SFI.NAME, STOCKQUOTES.DATE");
 
 				q.addEntity("SFI", SfiData.class).addEntity("INVESTMENT", InvestmentData.class)
-						.addEntity("STOCKQUOTES", StockQuotesData.class).addScalar("acctualValue")
-						.addScalar("initValue");
+						.addEntity("STOCKQUOTES", StockQuotesData.class).addEntity("ACCOUNT", AccountData.class)
+						.addScalar("acctualValue").addScalar("initValue");//
 
 				List<Object[]> data = q.list();
 
@@ -111,8 +115,8 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 					pd.setSfiData((SfiData) r[0]);
 					pd.setInvestmentData((InvestmentData) r[1]);
 					pd.setStockQuotesData((StockQuotesData) r[2]);
-					pd.setAcctualValue((BigDecimal) r[3]);
-					pd.setInitValue((BigDecimal) r[4]);
+					pd.setAcctualValue((BigDecimal) r[4]);
+					pd.setInitValue((BigDecimal) r[5]);
 					pDataList.add(pd);
 				}
 
@@ -123,7 +127,7 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 		return getHibernateTemplate().execute(action);
 	}
 
-	public PresentationSummaryData getSummary() throws SQLException {
+	public PresentationSummaryData getSummary(final AccountData accountData) throws SQLException {
 		HibernateCallback<PresentationSummaryData> action = new HibernateCallback<PresentationSummaryData>() {
 
 			@Override
@@ -134,6 +138,9 @@ public class Presentation extends HibernateDaoSupport implements IPresentation {
 								+ "FROM Investment "
 								+ "LEFT OUTER JOIN StockQuotes ON STOCKQUOTES.sfi_id = INVESTMENT.sfi_id  "
 								+ " WHERE Investment.SIMULATION = 0 "
+								+ " AND "
+								+ (accountData == null ? " Investment.ACCOUNT_ID IS NULL "
+										: " Investment.ACCOUNT_ID = " + accountData.getId())
 								+ " AND "
 								+ "StockQuotes.date = ("
 								+ "SELECT MAX(sq.date) FROM StockQuotes sq WHERE SQ.sfi_id = INVESTMENT.sfi_id" + " ) ");

@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
 
+import pl.jw.mbank.common.dto.AccountData;
 import pl.jw.mbank.common.dto.InvestmentData;
 import pl.jw.mbank.common.dto.SfiData;
 import pl.jw.mbank.common.dto.StockQuotesData;
@@ -29,6 +30,7 @@ public class DbConfiguration extends AnnotationConfiguration {
 
 		tables.add(SfiData.class);
 		tables.add(StockQuotesData.class);
+		tables.add(AccountData.class);
 		tables.add(InvestmentData.class);
 
 		for (Class<? extends Serializable> data : tables) {

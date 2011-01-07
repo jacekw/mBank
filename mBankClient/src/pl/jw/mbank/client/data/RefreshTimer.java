@@ -3,7 +3,7 @@
  */
 package pl.jw.mbank.client.data;
 
-class RefreshTimer {
+public class RefreshTimer {
 
 	private static long LAST_REFRESH = 0;
 

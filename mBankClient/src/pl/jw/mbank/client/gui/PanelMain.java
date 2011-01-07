@@ -1,34 +1,32 @@
 package pl.jw.mbank.client.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Window;
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import org.jdesktop.application.Action;
 import org.jdesktop.application.Application;
-import org.jdesktop.application.Task;
 
 import pl.jw.mbank.client.Env;
 import pl.jw.mbank.client.ExceptionHandler;
 import pl.jw.mbank.client.data.ITableDataRefreshCallbackHanlder;
-import pl.jw.mbank.client.data.loader.DataLoadTask;
 import pl.jw.mbank.client.gui.PanelGraph.PanelGraphDataInterpreterDelta;
 import pl.jw.mbank.client.gui.PanelGraph.PanelGraphDataInterpreterValue;
-import pl.jw.mbank.common.dto.PresentationData;
-import pl.jw.mbank.common.filter.DataFilter;
+import pl.jw.mbank.client.gui.PanelStocks.ITableRowSelectedListener;
+import pl.jw.mbank.client.gui.account.DialogAccountModification;
+import pl.jw.mbank.common.dto.AccountData;
+import pl.jw.mbank.common.dto.SfiData;
+import pl.jw.mbank.common.request.IAccount;
 
 public class PanelMain extends JPanel {
 
@@ -44,9 +42,11 @@ public class PanelMain extends JPanel {
 	private SystemTraySupport systemTraySupport;
 
 	private final JButton jButtonLoadData = new JButton("");
+	private final JButton jButtonAddAccount = new JButton("");
 	private final JToolBar jToolBar = new JToolBar();
 	private final JTextField jTextFieldFilter = new JTextField();
-	private final JTabbedPane jTabbedPane = new JTabbedPane();
+	private final JTabbedPane jTabbedPaneNorth = new JTabbedPane();;
+	private final JTabbedPane jTabbedPaneSouth = new JTabbedPane();
 
 	private final PanelPeriodGrowSummary panelPeriodGrowSummary = new PanelPeriodGrowSummary();
 
@@ -59,18 +59,13 @@ public class PanelMain extends JPanel {
 
 	private final PanelInvestmentCandidates panelInvestmentCandidates = new PanelInvestmentCandidates();
 
-	private final JTable jTableMBankSfi = new JTableMBankSfi();
-
-	private JTableMBankSfiTableModel jTableMBankSfiTableModel;
-	private JTableMBankSfiTableColumnModel jTableMBankSfiTableColumnModel;
-
-	public PanelMain(Window window) {
+	public PanelMain(Window window) throws Exception {
 		this.window = window;
 
 		initComponents();
 	}
 
-	private void initComponents() {
+	private void initComponents() throws Exception {
 
 		systemTraySupport = new SystemTraySupport(window, refreshCallbackHanlder);
 		systemTraySupport.init();
@@ -82,27 +77,35 @@ public class PanelMain extends JPanel {
 		jButtonLoadData.setMaximumSize(new Dimension(30, 30));
 		jButtonLoadData.setName("jButtonLoadData");
 
+		jButtonAddAccount.setPreferredSize(new Dimension(30, 30));
+		jButtonAddAccount.setMaximumSize(new Dimension(30, 30));
+		jButtonAddAccount.setName("jButtonAddAccount");
+
 		jTextFieldFilter.setMaximumSize(new Dimension(Short.MAX_VALUE, 20));
 		jTextFieldFilter.setName("jTextFieldFilter");
 
-		jToolBar.add(jButtonLoadData);
 		jToolBar.setPreferredSize(new Dimension(32, 32));
+
+		jToolBar.add(jButtonLoadData);
+		jToolBar.add(jButtonAddAccount);
 		jToolBar.addSeparator();
 		jToolBar.add(jTextFieldFilter);
 
-		jTabbedPane.setPreferredSize(new Dimension(Short.MAX_VALUE, 200));
-		jTabbedPane.addTab("Graph - delta", panelGraphDelta);
-		jTabbedPane.addTab("Graph - unit value", panelGraphValue);
+		jTabbedPaneSouth.setPreferredSize(new Dimension(Short.MAX_VALUE, 200));
+		jTabbedPaneSouth.addTab("Graph - delta", panelGraphDelta);
+		jTabbedPaneSouth.addTab("Graph - unit value", panelGraphValue);
 
-		jTabbedPane.addTab("Analysis", panelInvestmentCandidates);
+		jTabbedPaneSouth.addTab("Analysis", panelInvestmentCandidates);
+
+		generateAccountsTabs();
 
 		add(jToolBar, BorderLayout.PAGE_START);
-		add(new JScrollPane(jTableMBankSfi), BorderLayout.CENTER);
+		add(jTabbedPaneNorth, BorderLayout.CENTER);
 		add(panelInvestments, BorderLayout.EAST);
 
 		JPanel southPanel = new JPanel(new BorderLayout());
 		southPanel.add(panelPeriodGrowSummary, BorderLayout.SOUTH);
-		southPanel.add(jTabbedPane, BorderLayout.CENTER);
+		southPanel.add(jTabbedPaneSouth, BorderLayout.CENTER);
 
 		add(southPanel, BorderLayout.SOUTH);
 
@@ -111,24 +114,19 @@ public class PanelMain extends JPanel {
 		setup();
 	}
 
+	private void generateAccountsTabs() throws SQLException, Exception {
+		jTabbedPaneNorth.removeAll();
+
+		List<AccountData> listAccountData = Env.requestData(IAccount.class).get();
+		for (AccountData accountData : listAccountData) {
+			PanelStocks panelStocks = new PanelStocks(window, accountData, new StockTableRowSelectedListener());
+			panelStocks.setup();
+			jTabbedPaneNorth.add(accountData.getName(), panelStocks);
+		}
+
+	}
+
 	private void setup() {
-		jTableMBankSfi.setAutoscrolls(true);
-		jTableMBankSfi.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		jTableMBankSfi.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-		jTableMBankSfiTableModel = new JTableMBankSfiTableModel(
-				new JTableMBankSfiDataSetHandler(window, jTableMBankSfi));
-		jTableMBankSfi.setModel(jTableMBankSfiTableModel);
-
-		jTableMBankSfiTableColumnModel = new JTableMBankSfiTableColumnModel();
-		jTableMBankSfiTableColumnModel.addColumns(JTableMBankSfiTableModel.getTableColumnList());
-		jTableMBankSfi.setColumnModel(jTableMBankSfiTableColumnModel);
-
-		// jTableMBankSfi.setAutoCreateRowSorter(true);
-		// jTableMBankSfi.setRowSorter(new
-		// TableRowSorter<TableModel>(jTableMBankSfiTableModel));
-
-		jTableMBankSfi.getSelectionModel().addListSelectionListener(new TableSelectionHandler());
 
 		jTextFieldFilter.setText(Env.CONTEXT.getConfiguration().getDataFilter().getText());
 
@@ -140,53 +138,56 @@ public class PanelMain extends JPanel {
 		javax.swing.Action action = map.get("loadData");
 		jButtonLoadData.setAction(action);
 		jButtonLoadData.setText("");
+
+		action = map.get("addAccount");
+		jButtonAddAccount.setAction(action);
 	}
 
 	@Action(name = "loadData")
-	public Task<List<PresentationData>, Void> loadData() {
-		Env.CONTEXT.getConfiguration().setDataFilter(new DataFilter(jTextFieldFilter.getText()));
+	public void loadData() {
 
-		return new DataLoadTask(Application.getInstance(), jTableMBankSfiTableModel.getDataSetHandler());
+		for (Component c : jTabbedPaneNorth.getComponents()) {
+			if (c instanceof PanelStocks) {
+				((PanelStocks) c).loadData(jTextFieldFilter.getText());
+			}
+		}
+
 	}
 
-	ITableDataRefreshCallbackHanlder getRefreshCallbackHanlder() {
-		return refreshCallbackHanlder;
-	}
+	@Action(name = "addAccount")
+	public void addAccount() {
+		try {
+			DialogAccountModification dialog = new DialogAccountModification();
 
-	private void rowSelected(PresentationData selectedRowData) throws Exception {
+			dialog.setLocationRelativeTo(this);
+			dialog.setVisible(true);
 
-		if (selectedRowData != null) {
-			panelPeriodGrowSummary.refresh(selectedRowData.getSfiData());
-			panelInvestments.setData(selectedRowData.getSfiData());
-			panelGraphDelta.refresh(selectedRowData.getSfiData());
-			panelGraphValue.refresh(selectedRowData.getSfiData());
-		} else {
-			panelPeriodGrowSummary.refresh(null);
-			panelInvestments.setData(null);
-			panelGraphDelta.refresh(null);
-			panelGraphValue.refresh(null);
+			if (dialog.isAcceptance()) {
+
+				Env.requestData(IAccount.class).update(dialog.getAccountData());
+
+			}
+
+			generateAccountsTabs();
+
+		} catch (Exception e) {
+			ExceptionHandler.exception(e);
 		}
 	}
 
-	private class TableSelectionHandler implements ListSelectionListener {
-		public void valueChanged(ListSelectionEvent e) {
+	private class StockTableRowSelectedListener implements ITableRowSelectedListener {
+
+		@Override
+		public void rowSelected(AccountData accountData, SfiData sfiData) {
 			try {
-				ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-
-				if (!lsm.isSelectionEmpty()) {
-					if (!lsm.getValueIsAdjusting()) {
-						int i = lsm.getLeadSelectionIndex();
-						if (lsm.isSelectedIndex(i)) {
-							rowSelected(jTableMBankSfiTableModel.getSelectedRowData(i));
-						}
-					}
-				} else {
-					rowSelected(null);
-				}
-
-			} catch (Exception ex) {
-				ExceptionHandler.exception(ex);
+				panelPeriodGrowSummary.refresh(sfiData);
+				panelInvestments.setData(accountData, sfiData);
+				panelGraphDelta.refresh(sfiData);
+				panelGraphValue.refresh(sfiData);
+			} catch (Exception e) {
+				ExceptionHandler.exception(e);
 			}
+
 		}
 
 	}
