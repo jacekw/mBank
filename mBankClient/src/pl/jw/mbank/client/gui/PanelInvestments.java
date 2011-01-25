@@ -175,54 +175,74 @@ public class PanelInvestments extends JPanel {
 	public void setData(AccountData accountData, SfiData sfiData) throws Exception {
 		setChangedFields.clear();
 
-		this.sfiData = sfiData;
-		this.accountData = accountData;
+		if (accountData != null) {
 
-		PresentationSummaryData psDataSummary = Env.requestData(IPresentation.class).getSummary(accountData);
-		jTextTotalInvestedAmount.setText(String.valueOf(psDataSummary.getTotalInvestedAmount()));
-		jTextAcctualTotalInvestmentValue.setText(String.valueOf(psDataSummary.getAcctualTotalInvestmentValue()));
+			this.accountData = accountData;
+			this.sfiData = sfiData;
 
-		BigDecimal profit = psDataSummary.getAcctualTotalInvestmentValue()
-				.subtract(psDataSummary.getTotalInvestedAmount()).setScale(3, RoundingMode.FLOOR);
-		jTextAcctualProfit.setText(String.valueOf(profit));
-		jTextAcctualRealProfit.setText(String.valueOf(profit.multiply(FUCK_BELKA).setScale(3, RoundingMode.FLOOR)));
-		if (profit.compareTo(BigDecimal.ZERO) != 0) {
-			BigDecimal profitPercentage = profit.divide(psDataSummary.getTotalInvestedAmount(), RoundingMode.FLOOR)
-					.multiply(new BigDecimal(100)).setScale(0, RoundingMode.FLOOR);
-			jLabelAcctualRealProfitPercentage.setText("(" + String.valueOf(profitPercentage) + "%)");
-		}
+			PresentationSummaryData psDataSummary = Env.requestData(IPresentation.class).getSummary(accountData);
+			jTextTotalInvestedAmount.setText(String.valueOf(psDataSummary.getTotalInvestedAmount()));
+			jTextAcctualTotalInvestmentValue.setText(String.valueOf(psDataSummary.getAcctualTotalInvestmentValue()));
 
-		if (sfiData != null) {
-			investementData = Env.requestData(IInvestment.class).getBySfi(accountData, sfiData);
+			BigDecimal profit = psDataSummary.getAcctualTotalInvestmentValue()
+					.subtract(psDataSummary.getTotalInvestedAmount()).setScale(3, RoundingMode.FLOOR);
+			jTextAcctualProfit.setText(String.valueOf(profit));
+			jTextAcctualRealProfit.setText(String.valueOf(profit.multiply(FUCK_BELKA).setScale(3, RoundingMode.FLOOR)));
+			if (profit.compareTo(BigDecimal.ZERO) != 0) {
+				BigDecimal profitPercentage = profit.divide(psDataSummary.getTotalInvestedAmount(), RoundingMode.FLOOR)
+						.multiply(new BigDecimal(100)).setScale(0, RoundingMode.FLOOR);
+				jLabelAcctualRealProfitPercentage.setText("(" + String.valueOf(profitPercentage) + "%)");
+			}
 
-			jTextUnits.setEditable(true);
-			jTextInvestedAmount.setEditable(true);
-			jCheckBoxSimulation.setEnabled(true);
+			if (sfiData != null) {
+				investementData = Env.requestData(IInvestment.class).getBySfi(accountData, sfiData);
 
-			if (investementData != null) {
-				jTextUnits
-						.setText(String.valueOf(investementData.getUnits() == null ? "" : investementData.getUnits()));
-				jTextInvestedAmount.setText(String.valueOf(investementData.getInitialvalue() == null ? ""
-						: investementData.getInitialvalue()));
-				jCheckBoxSimulation.setSelected(investementData.isSimulation());
+				jTextUnits.setEditable(true);
+				jTextInvestedAmount.setEditable(true);
+				jCheckBoxSimulation.setEnabled(true);
+
+				if (investementData != null) {
+					jTextUnits.setText(String.valueOf(investementData.getUnits() == null ? "" : investementData
+							.getUnits()));
+					jTextInvestedAmount.setText(String.valueOf(investementData.getInitialvalue() == null ? ""
+							: investementData.getInitialvalue()));
+					jCheckBoxSimulation.setSelected(investementData.isSimulation());
+				} else {
+					jTextUnits.setText("");
+					jTextInvestedAmount.setText("");
+					jCheckBoxSimulation.setSelected(false);
+				}
 			} else {
-				jTextUnits.setText("");
-				jTextInvestedAmount.setText("");
-				jCheckBoxSimulation.setSelected(false);
+				clearInvestmentsFields();
 			}
 		} else {
-			investementData = null;
-			jTextUnits.setEditable(false);
-			jTextInvestedAmount.setEditable(false);
-			jTextUnits.setText("");
-			jTextInvestedAmount.setText("");
-			jCheckBoxSimulation.setSelected(false);
+			clearFileds();
 		}
 
 	}
 
+	private void clearFileds() {
+		clearInvestmentsFields();
+
+		jTextTotalInvestedAmount.setText("");
+		jTextAcctualTotalInvestmentValue.setText("");
+
+		jTextAcctualProfit.setText("");
+		jTextAcctualRealProfit.setText("");
+		jLabelAcctualRealProfitPercentage.setText("");
+	}
+
+	private void clearInvestmentsFields() {
+		investementData = null;
+		jTextUnits.setEditable(false);
+		jTextInvestedAmount.setEditable(false);
+		jTextUnits.setText("");
+		jTextInvestedAmount.setText("");
+		jCheckBoxSimulation.setSelected(false);
+	}
+
 	private boolean isContextSet() {
-		return sfiData != null;
+		return accountData != null && sfiData != null;
 	}
 
 	private class SaveFocusListener implements FocusListener {

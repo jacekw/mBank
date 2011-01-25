@@ -111,6 +111,10 @@ public class PanelStocks extends JPanel {
 
 	}
 
+	public AccountData getAccountData() {
+		return accountData;
+	}
+
 	private void rowSelected(PresentationData selectedRowData) throws Exception {
 		SfiData sfiData = selectedRowData == null ? null : selectedRowData.getSfiData();
 

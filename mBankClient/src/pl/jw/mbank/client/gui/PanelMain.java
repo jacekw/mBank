@@ -9,10 +9,13 @@ import java.util.List;
 
 import javax.swing.ActionMap;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.jdesktop.application.Action;
 import org.jdesktop.application.Application;
@@ -24,6 +27,7 @@ import pl.jw.mbank.client.gui.PanelGraph.PanelGraphDataInterpreterDelta;
 import pl.jw.mbank.client.gui.PanelGraph.PanelGraphDataInterpreterValue;
 import pl.jw.mbank.client.gui.PanelStocks.ITableRowSelectedListener;
 import pl.jw.mbank.client.gui.account.DialogAccountModification;
+import pl.jw.mbank.client.gui.util.BoxUtil;
 import pl.jw.mbank.common.dto.AccountData;
 import pl.jw.mbank.common.dto.SfiData;
 import pl.jw.mbank.common.request.IAccount;
@@ -42,7 +46,7 @@ public class PanelMain extends JPanel {
 	private SystemTraySupport systemTraySupport;
 
 	private final JButton jButtonLoadData = new JButton("");
-	private final JButton jButtonAddAccount = new JButton("");
+	private final JButton jButtonAddAccount = new JButton("+");
 	private final JToolBar jToolBar = new JToolBar();
 	private final JTextField jTextFieldFilter = new JTextField();
 	private final JTabbedPane jTabbedPaneNorth = new JTabbedPane();;
@@ -122,15 +126,16 @@ public class PanelMain extends JPanel {
 			PanelStocks panelStocks = new PanelStocks(window, accountData, new StockTableRowSelectedListener());
 			panelStocks.setup();
 			jTabbedPaneNorth.add(accountData.getName(), panelStocks);
+
+			JButton jbuttonDelete = new JButton("x");
+			JLabel jLabelTab = new JLabel(accountData.getName());
+			BoxUtil.setSize(jbuttonDelete, new Dimension(20, 20));
+			BoxUtil.setSize(jLabelTab, new Dimension(100, 10));
+
+			jTabbedPaneNorth.setTabComponentAt(jTabbedPaneNorth.getTabCount() - 1,
+					BoxUtil.getBox(jLabelTab, jbuttonDelete));
 		}
 
-	}
-
-	private void setup() {
-
-		jTextFieldFilter.setText(Env.CONTEXT.getConfiguration().getDataFilter().getText());
-
-		Env.scheduleCyclicRefresh(refreshCallbackHanlder);
 	}
 
 	private void addActions() {
@@ -141,6 +146,17 @@ public class PanelMain extends JPanel {
 
 		action = map.get("addAccount");
 		jButtonAddAccount.setAction(action);
+		jButtonAddAccount.setText("");
+
+		jTabbedPaneNorth.addChangeListener(new TabChangeListener());
+	}
+
+	private void setup() throws SQLException, Exception {
+
+		jTextFieldFilter.setText(Env.CONTEXT.getConfiguration().getDataFilter().getText());
+
+		Env.scheduleCyclicRefresh(refreshCallbackHanlder);
+
 	}
 
 	@Action(name = "loadData")
@@ -190,6 +206,20 @@ public class PanelMain extends JPanel {
 
 		}
 
+	}
+
+	private class TabChangeListener implements ChangeListener {
+
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			try {
+				PanelStocks panelStocks = (PanelStocks) jTabbedPaneNorth.getSelectedComponent();
+				panelInvestments.setData(panelStocks.getAccountData(), null);
+			} catch (Exception ex) {
+				ExceptionHandler.exception(ex);
+			}
+
+		}
 	}
 
 }
