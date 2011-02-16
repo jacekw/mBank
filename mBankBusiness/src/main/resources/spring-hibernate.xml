@@ -72,6 +72,12 @@
 		</property>
 	</bean>
 
+	<bean id="accountDao" class="pl.jw.mbank.biz.Account">
+		<property name="hibernateTemplate">
+			<ref bean="hibernateTemplate" />
+		</property>
+	</bean>
+
 
 	<bean id="presentationDao" class="pl.jw.mbank.biz.Presentation">
 		<property name="hibernateTemplate">
