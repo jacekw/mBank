@@ -14,94 +14,35 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jdesktop.application.Application;
-import org.jdesktop.application.Task;
 
 import pl.jw.mbank.client.Env;
-import pl.jw.mbank.client.data.DataGetter;
-import pl.jw.mbank.client.data.DataUpdaterAdapter;
-import pl.jw.mbank.client.data.IDataSetCallbackHandler;
 import pl.jw.mbank.client.data.IDataUpdater;
 import pl.jw.mbank.client.gui.SystemTraySupport;
 import pl.jw.mbank.common.dto.PresentationData;
 import pl.jw.mbank.common.request.IPresentation;
 
-public class DataLoadTask extends Task<List<PresentationData>, Void> {
+public class HttpDataUpdater implements IDataUpdater<PresentationData> {
 
-	private static class DbDataUpdater extends DataUpdaterAdapter<PresentationData> {
-		@Override
-		public List<PresentationData> get() throws Exception {
-			try {
-				return Env.requestData(IPresentation.class).get(null);
-			} finally {
-				SystemTraySupport.showTrayPopUpMessage("Data loaded");
-			}
-		}
-	}
-
-	private class HttpDataUpdater implements IDataUpdater<PresentationData> {
-
-		@Override
-		public List<PresentationData> get() throws Exception {
-			List<PresentationData> data = getData();
-
-			log.info("Pobranych kursów: " + data.size());
-
-			Env.requestData(IPresentation.class).update(data);
-
-			if (log.isDebugEnabled())
-				log.debug(getHtml());
-
-			try {
-				return Env.requestData(IPresentation.class).get(null);
-			} finally {
-				SystemTraySupport.showTrayPopUpMessage("Data updated");
-			}
-		}
-	}
-
-	/****************************************************************************************************/
-
-	private static Log log = LogFactory.getLog(DataLoadTask.class);
-
-	private final IDataSetCallbackHandler<PresentationData> dataSet;
-
-	public DataLoadTask(Application application, IDataSetCallbackHandler<PresentationData> dataSet) {
-		super(application);
-
-		this.dataSet = dataSet;
-
-		setup();
-	}
-
-	private void setup() {
-
-		DataGetter.getInstance().register(PresentationData.class, new HttpDataUpdater(), new DbDataUpdater());
-	}
+	private static Log log = LogFactory.getLog(HttpDataUpdater.class);
 
 	@Override
-	protected List<PresentationData> doInBackground() throws Exception {
-		dataSet.started();
-		return DataGetter.getInstance().get(PresentationData.class);
-	}
+	public List<PresentationData> get() throws Exception {
+		List<PresentationData> data = getData();
 
-	@Override
-	protected void failed(Throwable cause) {
-		super.failed(cause);
-		dataSet.failed(cause);
-	}
+		log.info("Pobranych kursów: " + data.size());
 
-	@Override
-	protected void finished() {
-		dataSet.finished();
-	}
+		Env.requestData(IPresentation.class).update(data);
 
-	@Override
-	protected void succeeded(List<PresentationData> result) {
-		dataSet.setData(result);
-	}
+		if (log.isDebugEnabled())
+			log.debug(getHtml());
 
-	/****************************************************************************************************/
+		//		try {
+		//			return Env.requestData(IPresentation.class).get(null, null);
+		//		} finally {
+		SystemTraySupport.showTrayPopUpMessage("Data updated");
+		//		}
+		return null;
+	}
 
 	private List<PresentationData> getData() throws IOException {
 
@@ -155,5 +96,4 @@ public class DataLoadTask extends Task<List<PresentationData>, Void> {
 		}
 		return sb.toString();
 	}
-
 }

@@ -12,8 +12,7 @@
 	http://www.springframework.org/schema/context
 	http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-	<context:property-placeholder
-		location="classpath:applicationContext.properties" />
+	<context:property-placeholder location="classpath:applicationContext.properties" />
 
 	<!--<context:property-placeholder location="classpath:applicationContextJUnit.properties" 
 		/> -->
@@ -46,6 +45,8 @@
 		</property>
 	</bean>
 
+	 <tx:annotation-driven transaction-manager="transactionManager"/
+
 	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
 		<property name="sessionFactory">
 			<ref bean="hibernateSessionFactory" />
@@ -72,6 +73,12 @@
 		</property>
 	</bean>
 
+	<bean id="accountDao" class="pl.jw.mbank.biz.Account">
+		<property name="hibernateTemplate">
+			<ref bean="hibernateTemplate" />
+		</property>
+	</bean>
+
 
 	<bean id="presentationDao" class="pl.jw.mbank.biz.Presentation">
 		<property name="hibernateTemplate">
@@ -85,35 +92,7 @@
 		</property>
 
 	</bean>
-	<!-- <tx:advice id="txAdvice" transaction-manager="transactionManager"> 
-		<tx:attributes> <tx:method name="add*" propagation="REQUIRES_NEW" /> <tx:method 
-		name="update*" propagation="REQUIRES_NEW" /> <tx:method name="get*" read-only="true" 
-		propagation="SUPPORTS" /> </tx:attributes> </tx:advice> <aop:config> <aop:pointcut 
-		id="bizMethods" expression="execution(* pl.jw.mbank.common.request.*.*(..))" 
-		/> <aop:advisor pointcut-ref="bizMethods" advice-ref="txAdvice" /> </aop:config> -->
 
-	<!-- <bean id="presentationTransactionManager" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"> 
-		<property name="transactionManager"> <ref local="transactionManager" /> </property> 
-		<property name="target"> <ref local="presentationDao" /> </property> <property 
-		name="transactionAttributes"> <props> <prop key="update*">PROPAGATION_REQUIRES_NEW</prop> 
-		<prop key="*">PROPAGATION_NEVER,readOnly</prop> </props> </property> </bean> 
-		<bean id="sfiTransactionManager" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"> 
-		<property name="transactionManager"> <ref local="transactionManager" /> </property> 
-		<property name="target"> <ref local="sfiDao" /> </property> <property name="transactionAttributes"> 
-		<props> <prop key="add*">PROPAGATION_MANDATORY</prop> <prop key="update*">PROPAGATION_MANDATORY</prop> 
-		<prop key="*">PROPAGATION_NEVER,readOnly</prop> </props> </property> </bean> 
-		<bean id="investmentTransactionManager" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"> 
-		<property name="transactionManager"> <ref local="transactionManager" /> </property> 
-		<property name="target"> <ref local="investmentDao" /> </property> <property 
-		name="transactionAttributes"> <props> <prop key="add*">PROPAGATION_MANDATORY</prop> 
-		<prop key="update*">PROPAGATION_MANDATORY</prop> <prop key="*">PROPAGATION_NEVER,readOnly</prop> 
-		</props> </property> </bean> <bean id="stockQuotesDaoTransactionManager" 
-		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"> 
-		<property name="transactionManager"> <ref local="transactionManager" /> </property> 
-		<property name="target"> <ref local="stockQuotesDao" /> </property> <property 
-		name="transactionAttributes"> <props> <prop key="add*">PROPAGATION_MANDATORY</prop> 
-		<prop key="update*">PROPAGATION_MANDATORY</prop> <prop key="*">PROPAGATION_NEVER,readOnly</prop> 
-		</props> </property> </bean> -->
 
 
 

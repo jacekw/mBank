@@ -9,6 +9,7 @@ import org.hibernate.criterion.Restrictions;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
+import pl.jw.mbank.common.dto.AccountData;
 import pl.jw.mbank.common.dto.InvestmentData;
 import pl.jw.mbank.common.dto.SfiData;
 import pl.jw.mbank.common.request.IInvestment;
@@ -51,7 +52,7 @@ public class Investment extends HibernateDaoSupport implements IInvestment {
 
 			@Override
 			public Void doInHibernate(Session session) throws HibernateException, SQLException {
-				InvestmentData id = getBySfi(data.getSfi());
+				InvestmentData id = getBySfi(data.getAccount(), data.getSfi());
 				if (id == null) {
 					add(data);
 				} else {
@@ -68,13 +69,15 @@ public class Investment extends HibernateDaoSupport implements IInvestment {
 	}
 
 	@Override
-	public InvestmentData getBySfi(final SfiData sfiData) throws SQLException {
+	public InvestmentData getBySfi(final AccountData accountData, final SfiData sfiData) throws SQLException {
 		HibernateCallback<InvestmentData> action = new HibernateCallback<InvestmentData>() {
 
 			@Override
 			public InvestmentData doInHibernate(Session session) throws HibernateException, SQLException {
 				Criteria c = session.createCriteria(InvestmentData.class);
 				c.createCriteria("sfi", SfiData.class.getSimpleName()).add(Restrictions.eq("id", sfiData.getId()));
+				c.createCriteria("account", AccountData.class.getSimpleName()).add(
+						Restrictions.eq("id", accountData.getId()));
 				return (InvestmentData) c.uniqueResult();
 			}
 
@@ -84,4 +87,5 @@ public class Investment extends HibernateDaoSupport implements IInvestment {
 
 		return id;
 	}
+
 }

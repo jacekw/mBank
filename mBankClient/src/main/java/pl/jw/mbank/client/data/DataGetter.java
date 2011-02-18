@@ -10,7 +10,7 @@ import java.util.Map;
 import pl.jw.mbank.client.Env;
 import pl.jw.mbank.common.IData;
 
-public class DataGetter {
+class DataGetter {
 
 	private static final DataGetter INSTANCE = new DataGetter();
 

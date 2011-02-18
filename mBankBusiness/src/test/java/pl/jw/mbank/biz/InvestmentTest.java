@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import pl.jw.mbank.biz.common.MBankTest;
+import pl.jw.mbank.common.dto.AccountData;
 import pl.jw.mbank.common.dto.InvestmentData;
 import pl.jw.mbank.common.dto.SfiData;
 import pl.jw.mbank.common.request.IInvestment;
@@ -29,13 +30,19 @@ public class InvestmentTest extends MBankTest {
 		return sfiData;
 	}
 
+	private AccountData getAccount() {
+		AccountData ad = new AccountData();
+		ad.setName("ja");
+		return ad;
+	}
+
 	private InvestmentData addInvestmentData() throws SQLException {
 		InvestmentData id = new InvestmentData();
 		id.setSfi(getSfiData());
 		id.setInitialvalue(new BigDecimal(100));
 		id.setUnits(new BigDecimal(4545));
 		id.setSimulation(false);
-
+		id.setAccount(getAccount());
 		investmentDao.update(id);
 
 		sessionFactory.getCurrentSession().flush();
@@ -73,6 +80,6 @@ public class InvestmentTest extends MBankTest {
 
 		sessionFactory.getCurrentSession().flush();
 
-		Assert.assertNotNull(investmentDao.getBySfi(id.getSfi()));
+		Assert.assertNotNull(investmentDao.getBySfi(id.getAccount(), id.getSfi()));
 	}
 }
