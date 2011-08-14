@@ -1,7 +1,6 @@
 package pl.jw.mbank.biz;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 
 import junit.framework.Assert;
 
@@ -22,7 +21,7 @@ public class InvestmentTest extends MBankTest {
 	@Autowired
 	protected IInvestment investmentDao;
 
-	public SfiData getSfiData() throws SQLException {
+	public SfiData getSfiData() {
 		SfiData sfiData = new SfiData();
 		sfiData.setName("hsbc");
 		sfiDao.add(sfiData);
@@ -36,7 +35,7 @@ public class InvestmentTest extends MBankTest {
 		return ad;
 	}
 
-	private InvestmentData addInvestmentData() throws SQLException {
+	private InvestmentData addInvestmentData() {
 		InvestmentData id = new InvestmentData();
 		id.setSfi(getSfiData());
 		id.setInitialvalue(new BigDecimal(100));
@@ -51,7 +50,7 @@ public class InvestmentTest extends MBankTest {
 	}
 
 	@Test
-	public void add() throws SQLException {
+	public void add() {
 		InvestmentData id = addInvestmentData();
 
 		Assert.assertNotSame(0, id.getId());
@@ -59,7 +58,7 @@ public class InvestmentTest extends MBankTest {
 	}
 
 	@Test
-	public void update() throws SQLException {
+	public void update() {
 		InvestmentData id = addInvestmentData();
 		id.setInitialvalue(new BigDecimal(222));
 		id.setUnits(new BigDecimal(6666));
@@ -70,7 +69,7 @@ public class InvestmentTest extends MBankTest {
 	}
 
 	@Test
-	public void getBySfi() throws SQLException {
+	public void getBySfi() {
 
 		InvestmentData id = addInvestmentData();
 		id.setInitialvalue(new BigDecimal(222));

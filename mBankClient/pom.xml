@@ -12,7 +12,7 @@
 
 	<groupId>pl.jw.mbank.client</groupId>
 	<artifactId>mBank-client</artifactId>
-	<version>0.8.0</version>
+	<version>0.8.0-SNAPSHOT</version>
 	<name>mBank-client</name>
 	<description>mBank-client</description>
 
@@ -36,7 +36,7 @@
 		<dependency>
 			<groupId>pl.jw.mbank.biz</groupId>
 			<artifactId>mBank-business</artifactId>
-			<version>0.8.0</version>
+			<version>0.8.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.htmlparser</groupId>

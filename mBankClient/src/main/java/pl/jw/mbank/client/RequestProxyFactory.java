@@ -12,7 +12,7 @@ public class RequestProxyFactory {
 	}
 
 	private static abstract class BaseRequestProxy implements IRequestProxy {
-		private static Log log = LogFactory.getLog(DirectRequestProxy.class);
+		private static Log log = LogFactory.getLog(BaseRequestProxy.class);
 
 		@Override
 		public <I extends IRequest> I requestData(Class<I> iFace) throws Exception {

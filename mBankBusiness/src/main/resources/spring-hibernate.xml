@@ -45,7 +45,7 @@
 		</property>
 	</bean>
 
-	 <tx:annotation-driven transaction-manager="transactionManager"/
+	 <tx:annotation-driven transaction-manager="transactionManager"/>
 
 	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
 		<property name="sessionFactory">

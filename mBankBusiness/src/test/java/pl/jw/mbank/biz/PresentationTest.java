@@ -2,7 +2,6 @@ package pl.jw.mbank.biz;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -29,7 +28,7 @@ public class PresentationTest extends MBankTest {
 	@Autowired
 	protected IPresentation presentationDao;
 
-	private SfiData addStockQuotes() throws SQLException {
+	private SfiData addStockQuotes() {
 		SfiData sfiData = new SfiData();
 		sfiData.setName("hsbc");
 		sfiDao.add(sfiData);
@@ -47,7 +46,7 @@ public class PresentationTest extends MBankTest {
 	}
 
 	@Test
-	public void getGraphData() throws SQLException {
+	public void getGraphData() {
 		SfiData sfiData = addStockQuotes();
 
 		List<PresentationGraphData> investDirections = presentationDao.getGraphData(sfiData);
@@ -57,7 +56,7 @@ public class PresentationTest extends MBankTest {
 	}
 
 	@Test
-	public void getInvestmentDirectionsData() throws SQLException {
+	public void getInvestmentDirectionsData() {
 		addStockQuotes();
 
 		List<InvstmentDirectionsData> investDirections = presentationDao.getInvestmentDirectionsData(1);

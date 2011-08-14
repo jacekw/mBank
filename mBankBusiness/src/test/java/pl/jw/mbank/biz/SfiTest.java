@@ -1,6 +1,5 @@
 package pl.jw.mbank.biz;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -19,7 +18,7 @@ public class SfiTest extends MBankTest {
 	protected ISfi sfiDao;
 
 	@Test
-	public void sfi() throws SQLException {
+	public void sfi() {
 
 		String nazwa = "blblas";
 
